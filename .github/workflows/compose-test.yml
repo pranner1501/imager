@@ -33,7 +33,7 @@ jobs:
         run: |
           # Example: ping a service endpoint
           # Change to your own test command
-          curl http://localhost:8080 || exit 1
+          curl http://localhost:3000 || exit 1
 
       - name: Print logs for debugging
         if: failure()
