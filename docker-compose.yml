@@ -1,32 +1,14 @@
+version: "3.8"
+
 services:
   app:
-    build: .
+    build: ./             # or context to your app
     container_name: image-app
     restart: always
-    environment:
-      - NODE_ENV=production
-      # keep secrets in .env file
     env_file:
       - .env
     expose:
-      - "3000"                       # internal exposure only
-    volumes:
-      - ./users:/app/users
-      - ./logs/app:/var/log/image-app   # optional: capture logs to host
-    depends_on:
-      - mongo
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-
-  mongo:
-    image: mongo:7
-    container_name: mongo
-    restart: always
-    volumes:
-      - mongo-data:/data/db
+      - "3000"            # internal only
     networks:
       - webnet
 
@@ -34,23 +16,18 @@ services:
     image: nginx:1.25
     container_name: nginx-proxy
     restart: always
-    depends_on:
-      - app
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80"           # public HTTP on VM IP
+      - "443:443"         # public HTTPS (optional)
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      # Option A (recommended): use certs from host/letsencrypt
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      # Option B: or use a local cert folder (./nginx/certs)
+      # If using self-signed certs (optional)
       # - ./nginx/certs:/etc/nginx/certs:ro
-      # - ./nginx/logs:/var/log/nginx
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - app
     networks:
       - webnet
-
-volumes:
-  mongo-data:
 
 networks:
   webnet:
