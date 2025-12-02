@@ -1,17 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Simple Image Upload</title>
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 20px auto; }
-    form { margin-bottom: 20px; }
-    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
-    .card { border: 1px solid #ccc; padding: 10px; text-align: center; }
-    .card img { max-width: 100%; height: auto; display: block; margin-bottom: 8px; }
-    button { cursor: pointer; }
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+    }
+
+    form {
+      margin-bottom: 20px;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .card img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    button {
+      cursor: pointer;
+    }
   </style>
 </head>
+
 <body>
 
   <h1>Welcome</h1>
@@ -30,7 +58,7 @@
   <div id="gallery" class="gallery"></div>
 
   <script>
-
+    var data;
     // -------- CHECK LOGIN --------
     async function checkAuth() {
       const res = await fetch('/user/profile');
@@ -38,7 +66,7 @@
         window.location.href = '/auth.html';
         return;
       }
-      const data = await res.json();
+      data = await res.json();
 
       document.getElementById('userInfo').innerHTML =
         `Logged in as <b>${data.username}</b> — 
@@ -70,7 +98,7 @@
         name.textContent = img.originalName;
         card.onmouseover = () => {
           card.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
-          name.textContent+=`\n(${(img.size/1e6).toFixed(2)}MB)`;
+          name.textContent += `\n(${(img.size / 1e6).toFixed(2)}MB)`;
         };
         card.onmouseout = () => {
           card.style.boxShadow = 'none';
@@ -80,14 +108,15 @@
         const btn = document.createElement('button');
         btn.textContent = 'Delete';
         btn.onclick = async () => {
-          if (!confirm('Delete this image?')) return;
+          if (!confirm(`delete ${JSON.stringify(data)} image`)) return;
           await fetch('/image/' + img._id, { method: 'DELETE' });
           loadImages();
         };
 
         card.appendChild(imageEl);
         card.appendChild(name);
-        card.appendChild(btn);
+        if (img.username == data.userId) 
+          card.appendChild(btn);
         gallery.appendChild(card);
       });
     }
@@ -114,4 +143,5 @@
 
   </script>
 </body>
+
 </html>
