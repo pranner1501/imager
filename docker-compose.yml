@@ -1,14 +1,32 @@
-version: "3.8"
-
 services:
   app:
-    build: ./             # or context to your app
+    build: .
     container_name: image-app
     restart: always
     env_file:
       - .env
+    # expose the internal port to the docker network (not published publicly)
     expose:
-      - "3000"            # internal only
+      - "3000"
+    volumes:
+      - ./users:/app/users
+      - ./logs/app:/var/log/image-app   # optional: capture app logs on host
+    depends_on:
+      - mongo
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - webnet
+
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    restart: always
+    volumes:
+      - mongo-data:/data/db
     networks:
       - webnet
 
@@ -16,18 +34,21 @@ services:
     image: nginx:1.25
     container_name: nginx-proxy
     restart: always
-    ports:
-      - "80:80"           # public HTTP on VM IP
-      - "443:443"         # public HTTPS (optional)
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      # If using self-signed certs (optional)
-      # - ./nginx/certs:/etc/nginx/certs:ro
-      - ./nginx/logs:/var/log/nginx
     depends_on:
       - app
+    ports:
+      - "80:80"     # public HTTP on the VM
+      - "443:443"   # public HTTPS (optional - for self-signed/testing or real certs later)
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/logs:/var/log/nginx
+      # optional: if you later mount certs from host or put self-signed certs in ./nginx/certs
+      - ./nginx/certs:/etc/nginx/certs:ro
     networks:
       - webnet
+
+volumes:
+  mongo-data:
 
 networks:
   webnet:
